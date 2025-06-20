@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -9,21 +9,18 @@
   <body>
     <header>
       <h1>Axel's Chatbot</h1>
-      <p>Powered by Cloudflare Workers AI</p>
-      <p class="subheader">Welcome to the chaos, Axel. What's next on the blueprint?</p>
+      <p class="subtitle">Welcome to the chaos, Axel. What’s next on the blueprint?</p>
     </header>
 
     <div class="chat-container">
-      <div id="chat-messages" class="chat-messages">
-        <div class="message assistant-message drift">
-          <p>Hello! I'm alive. What are we scheming today?</p>
-        </div>
+      <div id="chat-messages" class="chat-messages"></div>
+
+      <div class="typing-indicator" id="typing-indicator">
+        <span>.</span><span>.</span><span>.</span>
       </div>
 
-      <div class="typing-indicator" id="typing-indicator">AI is thinking...</div>
-
       <div class="message-input">
-        <textarea id="user-input" placeholder="Type your message here..." rows="1" autofocus></textarea>
+        <textarea id="user-input" placeholder="Type here..." rows="1" autofocus></textarea>
         <button id="send-button">Send</button>
       </div>
     </div>
