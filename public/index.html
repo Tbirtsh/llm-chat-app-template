@@ -1,34 +1,35 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Axel's Chatbot</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <header>
-      <h1>Axel's Chatbot</h1>
-      <p class="subtitle">Welcome to the chaos, Axel. What’s next on the blueprint?</p>
-    </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JKC's LLM</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>JKC's Chatbot</h1>
+    <p>Powered by blood and tears.</p>
+    <small>Welcome to simple living. Two questions, what's your name?, and what's next on the blueprint?</small>
+  </header>
 
-    <div class="chat-container">
-      <div id="chat-messages" class="chat-messages"></div>
+  <main class="chat-container" id="chat-container">
+    <div id="chat-messages" class="chat-messages"></div>
+  </main>
 
-      <div class="typing-indicator" id="typing-indicator">
-        <span>.</span><span>.</span><span>.</span>
-      </div>
+  <div class="typing-indicator" id="typing-indicator">
+    <span class="dots">...</span>
+  </div>
 
-      <div class="message-input">
-        <textarea id="user-input" placeholder="Type here..." rows="1" autofocus></textarea>
-        <button id="send-button">Send</button>
-      </div>
-    </div>
+  <form id="chat-form" class="message-input" autocomplete="off" spellcheck="false">
+    <textarea id="user-input" placeholder="Type your message here..." rows="1" autofocus></textarea>
+    <button id="send-button" type="submit">Send</button>
+  </form>
 
-    <footer>
-      <p>© 2025 | JustKiddingCreations</p>
-    </footer>
+  <footer>
+    <p>© 2025 | JustKiddingCreations</p>
+  </footer>
 
-    <script src="chat.js"></script>
-  </body>
+  <script src="chat.js"></script>
+</body>
 </html>
