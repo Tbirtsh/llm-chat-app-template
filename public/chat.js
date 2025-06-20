@@ -10,12 +10,11 @@ function appendMessage(text, isUser) {
   msgDiv.style.opacity = '0';
 
   const p = document.createElement('p');
-  p.textContent = text;
   msgDiv.appendChild(p);
 
   chatMessages.appendChild(msgDiv);
 
-  // Trigger fade-in animation
+  // Animate fade-in for container
   requestAnimationFrame(() => {
     msgDiv.style.opacity = '1';
   });
@@ -25,6 +24,22 @@ function appendMessage(text, isUser) {
     top: chatMessages.scrollHeight,
     behavior: 'smooth',
   });
+
+  if (isUser) {
+    p.textContent = text; // Just show user message immediately
+  } else {
+    // Animate typing for AI response
+    typeText(p, text);
+  }
+}
+
+// Typing effect function
+async function typeText(element, text) {
+  element.textContent = '';
+  for (let i = 0; i < text.length; i++) {
+    element.textContent += text.charAt(i);
+    await new Promise((r) => setTimeout(r, 30)); // 30ms per char, adjust speed here
+  }
 }
 
 function setLoading(isLoading) {
@@ -49,7 +64,7 @@ async function sendMessage() {
   setLoading(true);
 
   try {
-    // Replace with your actual API call
+    // Replace this with your actual API call
     const response = await fakeChatAPI(text);
 
     if (response && response.response) {
@@ -64,7 +79,7 @@ async function sendMessage() {
   }
 }
 
-// Example fake API to demo, replace with real fetch call:
+// Example fake API for demo, replace with your real fetch call:
 function fakeChatAPI(prompt) {
   return new Promise((res) => {
     setTimeout(() => {
@@ -73,10 +88,8 @@ function fakeChatAPI(prompt) {
   });
 }
 
-// Handle send button click
 sendButton.addEventListener('click', sendMessage);
 
-// Handle Enter key in textarea
 userInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
@@ -84,5 +97,4 @@ userInput.addEventListener('keydown', (e) => {
   }
 });
 
-// Autofocus on load
 userInput.focus();
