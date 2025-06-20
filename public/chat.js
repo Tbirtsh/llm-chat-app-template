@@ -1,100 +1,67 @@
+const sendButton = document.getElementById('send-button');
+const userInput = document.getElementById('user-input');
 const chatMessages = document.getElementById('chat-messages');
 const typingIndicator = document.getElementById('typing-indicator');
-const userInput = document.getElementById('user-input');
-const sendButton = document.getElementById('send-button');
 
-let isTyping = false;
-
-function createMessage(text, isUser = false) {
-  const msg = document.createElement('div');
-  msg.classList.add('message', isUser ? 'user-message' : 'assistant-message');
-  msg.textContent = text;
-  msg.style.animation = 'slam 0.3s ease forwards';
-
-  chatMessages.appendChild(msg);
-  scrollToBottom();
-
-  // After slam anim, start drifting
-  msg.addEventListener('animationend', () => {
-    msg.style.animation = '';
-    msg.style.animation = 'drift 15s ease-in-out infinite alternate';
-  });
-
-  return msg;
-}
-
-function scrollToBottom() {
-  chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
-}
-
-async function simulateTyping(text, speed = 15) {
-  typingIndicator.classList.add('visible');
-
-  // Create the typing bubble
-  const typingBubble = document.createElement('div');
-  typingBubble.classList.add('message', 'assistant-message');
-  chatMessages.appendChild(typingBubble);
-  scrollToBottom();
-
-  let currentText = '';
-  for (let i = 0; i < text.length; i++) {
-    currentText += text[i];
-    typingBubble.textContent = currentText;
-    scrollToBottom();
-    await new Promise(r => setTimeout(r, speed));
+sendButton.addEventListener('click', sendMessage);
+userInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
   }
+});
 
-  typingIndicator.classList.remove('visible');
+function appendMessage(text, isUser) {
+  const msgDiv = document.createElement('div');
+  msgDiv.classList.add('message');
+  msgDiv.classList.add(isUser ? 'user-message' : 'assistant-message');
+  const p = document.createElement('p');
+  msgDiv.appendChild(p);
+  chatMessages.appendChild(msgDiv);
+  chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
 
-  // Slam + drift animation after done typing
-  typingBubble.style.animation = 'slam 0.3s ease forwards';
-  typingBubble.addEventListener('animationend', () => {
-    typingBubble.style.animation = 'drift 15s ease-in-out infinite alternate';
-  });
+  if (isUser) {
+    p.textContent = text;
+    msgDiv.classList.add('drift');
+  } else {
+    typeText(p, text, msgDiv);
+  }
 }
 
-async function sendMessage(message) {
-  if (!message.trim() || isTyping) return;
+async function typeText(element, text, container) {
+  element.textContent = '';
+  container.classList.add('shaking');
+  for (let i = 0; i < text.length; i++) {
+    element.textContent += text.charAt(i);
+    await new Promise((r) => setTimeout(r, 18)); // speed up typing here if you want
+  }
+  container.classList.remove('shaking');
+  container.classList.add('drift');
+  chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+}
 
-  isTyping = true;
+async function sendMessage() {
+  const input = userInput.value.trim();
+  if (!input) return;
 
-  // Add user message once
-  createMessage(message, true);
-
+  appendMessage(input, true);
   userInput.value = '';
-  userInput.style.height = 'auto';
+  typingIndicator.style.display = 'block';
   sendButton.disabled = true;
 
   try {
-    // Simulate delay / replace with your API call
-    await new Promise(r => setTimeout(r, 500));
-
-    const botReply = `Axel, got your message: "${message}" — let's build some chaos.`;
-
-    await simulateTyping(botReply);
-
-  } catch {
-    createMessage('Error: Could not fetch response', false);
-  } finally {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: input }] }),
+    });
+    const data = await response.json();
+    typingIndicator.style.display = 'none';
     sendButton.disabled = false;
-    isTyping = false;
+    appendMessage(data.response || 'Error: No response', false);
+  } catch (err) {
+    typingIndicator.style.display = 'none';
+    sendButton.disabled = false;
+    appendMessage('Error: Load failed', false);
   }
 }
-
-sendButton.addEventListener('click', () => sendMessage(userInput.value));
-userInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage(userInput.value);
-  }
-});
-
-userInput.addEventListener('input', () => {
-  userInput.style.height = 'auto';
-  userInput.style.height = userInput.scrollHeight + 'px';
-});
-
-// Initial greeting
-window.addEventListener('load', () => {
-  createMessage('Hello Axel. Ready to fuck shit up?');
-});
