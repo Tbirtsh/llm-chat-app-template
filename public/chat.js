@@ -3,76 +3,86 @@ const userInput = document.getElementById('user-input');
 const sendButton = document.getElementById('send-button');
 const typingIndicator = document.getElementById('typing-indicator');
 
-sendButton.addEventListener('click', () => {
-  const text = userInput.value.trim();
-  if (!text) return;
-  addMessage(text, 'user-message');
-  userInput.value = '';
-  userInput.disabled = true;
-  sendButton.disabled = true;
-  typingIndicator.classList.add('visible');
-  sendToAPI(text);
-});
-
-userInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendButton.click();
-  }
-});
-
-function addMessage(text, type) {
+function appendMessage(text, isUser) {
   const msgDiv = document.createElement('div');
-  msgDiv.classList.add('message', type);
-  msgDiv.textContent = text;
+  msgDiv.classList.add('message');
+  msgDiv.classList.add(isUser ? 'user-message' : 'assistant-message');
+  msgDiv.style.opacity = '0';
+
+  const p = document.createElement('p');
+  p.textContent = text;
+  msgDiv.appendChild(p);
+
   chatMessages.appendChild(msgDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // Trigger fade-in animation
+  requestAnimationFrame(() => {
+    msgDiv.style.opacity = '1';
+  });
+
+  // Scroll smoothly to bottom
+  chatMessages.scrollTo({
+    top: chatMessages.scrollHeight,
+    behavior: 'smooth',
+  });
 }
 
-async function sendToAPI(message) {
-  try {
-    // Assume your API expects a POST with { messages } including the history,
-    // but here we'll keep it simple: just the latest user message
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [
-          { role: 'user', content: message }
-        ]
-      }),
-    });
-
-    if (!response.ok) throw new Error('Network response was not ok');
-
-    // If streaming supported, handle text stream:
-    if (response.body && response.body.getReader) {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let assistantMsg = '';
-      const msgDiv = document.createElement('div');
-      msgDiv.classList.add('message', 'assistant-message');
-      chatMessages.appendChild(msgDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-
-      while(true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        assistantMsg += decoder.decode(value, {stream: true});
-        msgDiv.textContent = assistantMsg;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-    } else {
-      // fallback to full text response:
-      const data = await response.json();
-      addMessage(data.result || 'No response', 'assistant-message');
-    }
-  } catch (err) {
-    addMessage('Error: ' + err.message, 'assistant-message');
-  } finally {
-    typingIndicator.classList.remove('visible');
-    userInput.disabled = false;
+function setLoading(isLoading) {
+  if (isLoading) {
+    typingIndicator.style.display = 'flex';
+    sendButton.disabled = true;
+    userInput.disabled = true;
+  } else {
+    typingIndicator.style.display = 'none';
     sendButton.disabled = false;
+    userInput.disabled = false;
     userInput.focus();
   }
 }
+
+async function sendMessage() {
+  const text = userInput.value.trim();
+  if (!text) return;
+
+  appendMessage(text, true);
+  userInput.value = '';
+  setLoading(true);
+
+  try {
+    // Replace with your actual API call
+    const response = await fakeChatAPI(text);
+
+    if (response && response.response) {
+      appendMessage(response.response, false);
+    } else {
+      appendMessage('🤖 AI gave no answer, what the hell?', false);
+    }
+  } catch (e) {
+    appendMessage('⚠️ Error: ' + e.message, false);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// Example fake API to demo, replace with real fetch call:
+function fakeChatAPI(prompt) {
+  return new Promise((res) => {
+    setTimeout(() => {
+      res({ response: "Sup! What's up? Need help with something or just wanna chat?" });
+    }, 1500);
+  });
+}
+
+// Handle send button click
+sendButton.addEventListener('click', sendMessage);
+
+// Handle Enter key in textarea
+userInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Autofocus on load
+userInput.focus();
