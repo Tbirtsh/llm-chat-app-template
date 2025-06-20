@@ -1,88 +1,92 @@
 const chatMessages = document.getElementById('chat-messages');
 const typingIndicator = document.getElementById('typing-indicator');
-const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
 const sendButton = document.getElementById('send-button');
 
 let isTyping = false;
 
-// Append a message bubble
 function createMessage(text, isUser = false) {
-  const message = document.createElement('div');
-  message.classList.add('message');
-  message.classList.add(isUser ? 'user-message' : 'assistant-message');
-  message.style.animation = 'slam 0.3s ease forwards';
-  message.textContent = text;
-  chatMessages.appendChild(message);
+  const msg = document.createElement('div');
+  msg.classList.add('message', isUser ? 'user-message' : 'assistant-message');
+  msg.textContent = text;
+  msg.style.animation = 'slam 0.3s ease forwards';
 
-  // After slam animation, start drift
-  message.addEventListener('animationend', () => {
-    message.style.animation = '';
-    message.style.animation = 'drift 15s ease-in-out infinite alternate';
+  chatMessages.appendChild(msg);
+  scrollToBottom();
+
+  // After slam anim, start drifting
+  msg.addEventListener('animationend', () => {
+    msg.style.animation = '';
+    msg.style.animation = 'drift 15s ease-in-out infinite alternate';
   });
 
-  scrollToBottom();
-  return message;
+  return msg;
 }
 
-// Scroll chat to bottom
 function scrollToBottom() {
   chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
 }
 
-// Show typing indicator
-function showTyping() {
+async function simulateTyping(text, speed = 15) {
   typingIndicator.classList.add('visible');
-}
 
-// Hide typing indicator
-function hideTyping() {
-  typingIndicator.classList.remove('visible');
-}
+  // Create the typing bubble
+  const typingBubble = document.createElement('div');
+  typingBubble.classList.add('message', 'assistant-message');
+  chatMessages.appendChild(typingBubble);
+  scrollToBottom();
 
-// Simulate typing with letter-by-letter update
-async function simulateTyping(text, speed = 20) {
-  showTyping();
-  const typingMessage = createMessage('', false);
-  let current = '';
+  let currentText = '';
   for (let i = 0; i < text.length; i++) {
-    current += text[i];
-    typingMessage.textContent = current;
+    currentText += text[i];
+    typingBubble.textContent = currentText;
     scrollToBottom();
     await new Promise(r => setTimeout(r, speed));
   }
-  hideTyping();
+
+  typingIndicator.classList.remove('visible');
+
+  // Slam + drift animation after done typing
+  typingBubble.style.animation = 'slam 0.3s ease forwards';
+  typingBubble.addEventListener('animationend', () => {
+    typingBubble.style.animation = 'drift 15s ease-in-out infinite alternate';
+  });
 }
 
-// Handle sending user message and getting bot response
 async function sendMessage(message) {
   if (!message.trim() || isTyping) return;
+
   isTyping = true;
 
-  createMessage(message, true); // Show user message
+  // Add user message once
+  createMessage(message, true);
+
   userInput.value = '';
   userInput.style.height = 'auto';
   sendButton.disabled = true;
 
   try {
-    // Replace this fake delay with actual API call if you want
-    await new Promise(r => setTimeout(r, 800));
+    // Simulate delay / replace with your API call
+    await new Promise(r => setTimeout(r, 500));
 
-    const botResponse = `Axel, got your message: "${message}" — let's build some chaos.`;
+    const botReply = `Axel, got your message: "${message}" — let's build some chaos.`;
 
-    await simulateTyping(botResponse, 20);
-  } catch (e) {
-    createMessage('Error: Could not get response.', false);
+    await simulateTyping(botReply);
+
+  } catch {
+    createMessage('Error: Could not fetch response', false);
   } finally {
     sendButton.disabled = false;
     isTyping = false;
   }
 }
 
-// Event listeners
-chatForm.addEventListener('submit', e => {
-  e.preventDefault();
-  sendMessage(userInput.value);
+sendButton.addEventListener('click', () => sendMessage(userInput.value));
+userInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage(userInput.value);
+  }
 });
 
 userInput.addEventListener('input', () => {
@@ -91,6 +95,6 @@ userInput.addEventListener('input', () => {
 });
 
 // Initial greeting
-window.addEventListener('DOMContentLoaded', () => {
-  createMessage("Hello Axel. Ready to fuck shit up?");
+window.addEventListener('load', () => {
+  createMessage('Hello Axel. Ready to fuck shit up?');
 });
