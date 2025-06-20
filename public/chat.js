@@ -6,6 +6,7 @@ const sendButton = document.getElementById('send-button');
 
 let isTyping = false;
 
+// Append a message bubble
 function createMessage(text, isUser = false) {
   const message = document.createElement('div');
   message.classList.add('message');
@@ -14,79 +15,74 @@ function createMessage(text, isUser = false) {
   message.textContent = text;
   chatMessages.appendChild(message);
 
-  // Start drifting after slam animation
+  // After slam animation, start drift
   message.addEventListener('animationend', () => {
     message.style.animation = '';
     message.style.animation = 'drift 15s ease-in-out infinite alternate';
   });
 
   scrollToBottom();
+  return message;
 }
 
+// Scroll chat to bottom
 function scrollToBottom() {
   chatMessages.parentElement.scrollTop = chatMessages.parentElement.scrollHeight;
 }
 
+// Show typing indicator
 function showTyping() {
   typingIndicator.classList.add('visible');
 }
 
+// Hide typing indicator
 function hideTyping() {
   typingIndicator.classList.remove('visible');
 }
 
-async function simulateTyping(text, speed = 30) {
+// Simulate typing with letter-by-letter update
+async function simulateTyping(text, speed = 20) {
   showTyping();
+  const typingMessage = createMessage('', false);
   let current = '';
   for (let i = 0; i < text.length; i++) {
     current += text[i];
-    updateLastMessage(current);
+    typingMessage.textContent = current;
+    scrollToBottom();
     await new Promise(r => setTimeout(r, speed));
   }
   hideTyping();
 }
 
-function updateLastMessage(text) {
-  const messages = chatMessages.getElementsByClassName('assistant-message');
-  if (messages.length === 0) {
-    createMessage(text, false);
-  } else {
-    messages[messages.length - 1].textContent = text;
-  }
-  scrollToBottom();
-}
-
+// Handle sending user message and getting bot response
 async function sendMessage(message) {
-  if (!message.trim()) return;
+  if (!message.trim() || isTyping) return;
+  isTyping = true;
 
-  createMessage(message, true);
+  createMessage(message, true); // Show user message
   userInput.value = '';
+  userInput.style.height = 'auto';
   sendButton.disabled = true;
 
-  // Simulate API call to Cloudflare AI Worker here
-  showTyping();
-
   try {
-    // Fake delay for demo (replace this with real fetch to your worker)
+    // Replace this fake delay with actual API call if you want
     await new Promise(r => setTimeout(r, 800));
 
-    // Demo bot response:
     const botResponse = `Axel, got your message: "${message}" — let's build some chaos.`;
 
     await simulateTyping(botResponse, 20);
   } catch (e) {
-    updateLastMessage('Error: Could not get response.');
+    createMessage('Error: Could not get response.', false);
   } finally {
     sendButton.disabled = false;
-    hideTyping();
+    isTyping = false;
   }
 }
 
+// Event listeners
 chatForm.addEventListener('submit', e => {
   e.preventDefault();
-  if (!isTyping) {
-    sendMessage(userInput.value);
-  }
+  sendMessage(userInput.value);
 });
 
 userInput.addEventListener('input', () => {
@@ -94,7 +90,7 @@ userInput.addEventListener('input', () => {
   userInput.style.height = userInput.scrollHeight + 'px';
 });
 
-// On page load, greet user
+// Initial greeting
 window.addEventListener('DOMContentLoaded', () => {
   createMessage("Hello Axel. Ready to fuck shit up?");
 });
